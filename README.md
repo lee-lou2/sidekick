@@ -1,3 +1,5 @@
+> English | **[한국어](README.ko.md)**
+
 <p align="center">
   <img src="assets/logo.png" alt="Sidekick" width="200" />
 </p>
@@ -16,43 +18,50 @@
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" />
 </p>
 
+<p align="center">
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="AGENTS.md">Dev Guide</a>
+</p>
+
 ---
 
-## 왜 만들었나
+## Why Sidekick?
 
-범용 AI 챗봇은 매번 같은 맥락을 반복 설명해야 하고, 할 수 있는 일이 정해져 있다.
+Generic AI chatbots forget you after every conversation, and their capabilities are fixed.
 
-**Sidekick은 다르다** — 나를 기억하고, 시키면 알아서 실행하고, 필요한 기능은 함수 하나로 붙인다.
+**Sidekick is different** — it remembers your context, runs tasks on a schedule, and you can add any tool with a single function.
 
-| 범용 챗봇 | Sidekick |
-|-----------|----------|
-| 매번 같은 설명 반복 | 이전 대화, 프로젝트, 선호 스타일을 기억 |
-| 실시간 대화만 가능 | "1시간 후에 알려줘" 예약 작업 |
-| 고정된 기능 | `@register_tool` 하나로 도구 추가 |
-| 프롬프트 직접 입력 | `!브리핑` 커스텀 명령어 |
+| Generic Chatbot | Sidekick |
+|-----------------|----------|
+| Repeats the same context every time | Remembers past conversations, projects, preferences |
+| Real-time chat only | "Remind me in 1 hour" — scheduled tasks |
+| Fixed capabilities | Add tools with `@register_tool` |
+| Raw prompt input | `!briefing` — custom shortcut commands |
 
-## 빠른 시작
+## Quick Start
 
-### 원클릭 설치
+### One-Line Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/lee-lou2/sidekick/main/install.sh | bash
 ```
 
-### 수동 설치
+### Manual Setup
 
 ```bash
 git clone https://github.com/lee-lou2/sidekick.git
 cd sidekick
-cp .env.example .env  # GOOGLE_API_KEY 설정
-make run              # 설정 + 모드 선택 + 실행
+cp .env.example .env  # Set your GOOGLE_API_KEY
+make run              # Auto-installs deps, picks run mode
 ```
 
-> `make run` 하나로 uv 설치, 의존성, 실행 모드 선택까지 자동 처리됩니다.
+> `make run` handles uv installation, dependencies, and run mode selection automatically.
 
-### 실행 모드
+### Run Modes
 
-**Slack 봇:**
+**Slack Bot:**
 ```bash
 uv run python src/interfaces/slack/bot.py
 ```
@@ -62,93 +71,67 @@ uv run python src/interfaces/slack/bot.py
 uv run uvicorn src.interfaces.api:app --port 8000
 ```
 
-**API 호출 예시:**
+**API Example:**
 ```bash
 curl -X POST http://localhost:8000/run \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $API_AUTH_KEY" \
   -d '{
-    "prompt": "오늘 뉴스 요약해줘",
+    "prompt": "Summarize today'\''s news",
     "webhook_url": "https://your-server.com/webhook"
   }'
 ```
 
-## 핵심 기능
+## Features
 
-```mermaid
-graph LR
-    subgraph 개인화
-        Memory[("🧠 메모리<br/>대화 기억")]
-    end
-
-    subgraph 자동화
-        Scheduler["⏰ 스케줄러<br/>예약 작업"]
-        Commands["⚡ 커스텀 명령<br/>!브리핑"]
-    end
-
-    subgraph 확장
-        Tools["🔧 도구<br/>@register_tool"]
-    end
-
-    User((사용자)) --> Memory
-    User --> Scheduler
-    User --> Commands
-    User --> Tools
-
-    Memory --> Agent[AI 에이전트]
-    Scheduler --> Agent
-    Commands --> Agent
-    Tools --> Agent
-```
-
-### 🧠 메모리 - 대화를 기억하는 AI
+### Memory — An AI That Remembers
 
 ```
-사용자: 나 요즘 FastAPI로 사이드 프로젝트 하고 있어
-에이전트: 어떤 서비스 만들고 있어?
+You:   I'm working on a side project with FastAPI
+Agent: What kind of service are you building?
 
-(며칠 후)
+(days later)
 
-사용자: API가 좀 느린 것 같아
-에이전트: FastAPI 프로젝트 말하는 거지? 보통 DB 쿼리나 동기 I/O가 병목이야.
-         특정 엔드포인트 프로파일링 해볼까?
+You:   My API feels slow
+Agent: Your FastAPI project? Usually it's DB queries or sync I/O.
+       Want me to profile a specific endpoint?
 ```
 
-- 이름, 프로젝트, 선호 스타일(반말/존댓말)을 자동 기억
-- "기억해" 같은 명시적 요청 없이 자연스럽게 학습
-- 사용자별 격리된 메모리 (멀티유저 안전)
+- Automatically remembers names, projects, communication style
+- No explicit "remember this" needed — learns naturally
+- Per-user isolated memory (multi-user safe)
 
-### ⏰ 스케줄러 - 예약 작업
-
-```
-"1분 후에 오늘 뉴스 요약해줘"
-"오후 5시에 회의 준비 알림"
-"내일 오전 10시에 이메일 체크해줘"
-```
-
-- 한국어/영어 시간 표현 자동 파싱
-- SQLite 영속성 - 봇 재시작해도 예약 유지
-- `예약 목록 보여줘`, `작업 abc123 취소해줘`
-
-### ⚡ 커스텀 명령어
-
-자주 쓰는 프롬프트를 명령어로 저장:
+### Scheduler — Timed Tasks
 
 ```
-사용자: !브리핑 만들어줘. 프롬프트는 "오늘 주요 뉴스 3개 요약해줘"
-에이전트: 명령어 '브리핑' 생성 완료!
-
-(이후)
-
-사용자: !브리핑
-에이전트: [오늘의 뉴스 요약...]
+"Summarize today's news in 1 minute"
+"Remind me about the meeting at 5 PM"
+"Check my email tomorrow at 10 AM"
 ```
 
-- AI가 프롬프트를 자동 개선
-- 적합한 도구 자동 추천
-- 본인이 만든 명령어만 수정/삭제 가능
+- Parses Korean and English time expressions
+- SQLite persistence — survives bot restarts
+- `List my scheduled tasks`, `Cancel task abc123`
 
-### 🔧 도구 확장
+### Custom Commands
+
+Save frequently-used prompts as shortcut commands:
+
+```
+You:   Create a command !briefing with prompt "Summarize top 3 news today"
+Agent: Command 'briefing' created!
+
+(later)
+
+You:   !briefing
+Agent: [Today's news summary...]
+```
+
+- AI auto-improves your prompt
+- Recommends relevant tools automatically
+- Users can only modify their own commands
+
+### Plug-and-Play Tools
 
 ```python
 # src/tools/custom/weather.py
@@ -157,76 +140,49 @@ from src.tools.registry import register_tool
 
 @register_tool
 def get_weather(city: str) -> str:
-    """도시의 날씨를 조회합니다."""
+    """Get the weather for a city."""
     api_key = os.getenv("WEATHER_API_KEY")
     return fetch_weather_api(city, api_key)
 ```
 
-**도구 파일 하나만 추가하면 끝.** 다른 파일 수정 불필요.
-- 환경변수: `.env`에 추가
-- 재시작: `make run`
+**Drop a file, restart, done.** No other files to modify.
+- Environment variables: add to `.env`
+- Restart: `make run`
 
-### 📦 도구 공유 - 업로드 & 설치
+### Tool Sharing
 
-만든 도구를 다른 사람과 공유하고, 공유받은 도구를 설치할 수 있다.
+Share tools with others and install shared tools:
 
-**도구 업로드 (공유하기):**
 ```bash
-make tool-upload
-```
-```
-사용 가능한 도구 파일:
-  1) exa_search.py
-  2) weather.py
-번호를 선택하세요: 2
-
-✅ 업로드 완료!
-🔗 https://litter.catbox.moe/abc123.py (1시간 후 만료)
+make tool-upload   # Upload → get a temporary link
+make tool-install  # Install from a link → auto-validates Python syntax
 ```
 
-**도구 설치 (공유받기):**
-```bash
-make tool-install
-```
-```
-도구 파일 URL: https://litter.catbox.moe/abc123.py
-파일명: weather.py
-
-✅ 설치 완료! → src/tools/custom/weather.py
-make run 으로 재시작하세요.
-```
-
-- 업로드 시 임시 링크 생성 (1시간 유효)
-- 설치 시 Python 문법 자동 검증
-- `src/tools/custom/`에 자동 배치
-
-## 아키텍처
-
-### 레이어 구조
+## Architecture
 
 ```mermaid
 graph TB
-    subgraph Interfaces["인터페이스 레이어"]
+    subgraph Interfaces
         Slack[Slack Bot]
         API[REST API]
     end
 
-    subgraph Middleware["미들웨어 레이어"]
-        Pre[전처리<br/>명령어 파싱]
-        Guard[Guardrails<br/>보안]
-        Post[후처리<br/>포맷팅]
+    subgraph Middleware
+        Pre[Preprocessing]
+        Guard[Guardrails]
+        Post[Postprocessing]
     end
 
-    subgraph Core["코어 레이어"]
+    subgraph Core
         Agent[AgentRunner]
         Memory[Memory]
         Scheduler[Scheduler]
         Commands[Commands]
     end
 
-    subgraph Tools["도구 레이어"]
+    subgraph Tools
         Custom["@register_tool"]
-        MCP[MCP 서버]
+        MCP[MCP Servers]
     end
 
     Slack --> Pre
@@ -241,85 +197,112 @@ graph TB
     Agent -.-> Commands
 ```
 
-각 레이어는 명확한 책임을 가진다:
+| Layer | Responsibility | Examples |
+|-------|---------------|----------|
+| **Interfaces** | Entry points, protocol handling | Slack Socket Mode, FastAPI |
+| **Middleware** | Cross-cutting concerns | Security guardrails, preprocessing |
+| **Core** | Business logic | Agent, memory, scheduler |
+| **Tools** | Tool definitions & execution | Custom functions, MCP servers |
 
-| 레이어 | 책임 | 예시 |
-|--------|------|------|
-| **Interfaces** | 외부 진입점, 프로토콜 처리 | Slack Socket Mode, FastAPI |
-| **Middleware** | 횡단 관심사 | 보안, 전처리, 후처리 |
-| **Core** | 비즈니스 로직 | 에이전트, 메모리, 스케줄러 |
-| **Tools** | 도구 정의 및 실행 | 커스텀 함수, MCP 서버 |
-
-### 디렉토리 구조
+<details>
+<summary>Directory Structure</summary>
 
 ```
 src/
-├── interfaces/          # 진입점
+├── interfaces/          # Entry points
 │   ├── slack/          # Slack (Socket Mode, lazy listener)
-│   └── api/            # FastAPI (비동기, 웹훅)
+│   └── api/            # FastAPI (async, webhooks)
 ├── middleware/
-│   ├── guardrails/     # 보안 - 민감 파일 차단, 쓰기 제한
-│   ├── preprocessing/  # 명령어 파싱, 컨텍스트 설정
-│   └── postprocessing/ # 응답 후처리 (최소화)
+│   ├── guardrails/     # Security — sensitive file blocking, write restrictions
+│   ├── preprocessing/  # Command parsing, context setup
+│   └── postprocessing/ # Response formatting (minimal)
 ├── core/
 │   ├── agent/          # AgentRunner, AgentFactory, utils
-│   ├── memory/         # 그래프 기반 사용자 컨텍스트
+│   ├── memory/         # Graph-based user context
 │   ├── scheduler/      # APScheduler + SQLite
-│   ├── commands/       # 커스텀 명령어 CRUD
-│   └── lifecycle.py    # 컴포넌트 시작/종료 관리
+│   ├── commands/       # Custom command CRUD
+│   └── lifecycle.py    # Component start/stop management
 ├── tools/
-│   ├── custom/         # @register_tool 도구들
-│   ├── mcp/            # MCP 서버 정의 (register_mcp_server, gitignored)
-│   ├── mcp_registry.py # MCPServerConfig, ServerGuardrailRules, register_mcp_server()
-│   ├── mcp_client.py   # MCPManager (다중 MCP 서버 연결)
-│   ├── catalog.py      # 모든 도구 통합
-│   └── registry.py     # 자동 등록 로직
-└── utils/              # 로깅, 포맷터 등
+│   ├── custom/         # @register_tool functions
+│   ├── mcp/            # MCP server definitions (gitignored)
+│   ├── mcp_registry.py # MCPServerConfig, register_mcp_server()
+│   ├── mcp_client.py   # MCPManager (multi-server connections)
+│   ├── catalog.py      # Unified tool catalog
+│   └── registry.py     # Auto-registration logic
+└── utils/              # Logging, formatters, etc.
 ```
 
-### 설계 특징
+</details>
 
-| 특징 | 구현 |
-|------|------|
-| **느슨한 결합** | 플러그앤플레이 도구/MCP 서버 - 파일 추가/삭제만으로 등록/해제 |
-| **Defense in Depth** | Guardrails가 MCP + 커스텀 도구 모두 보호 |
-| **Lifecycle 관리** | 싱글톤 컴포넌트 시작/종료 순서 보장 |
-| **MCP 통합** | filesystem, git, github 등 외부 도구 연결 |
-| **Observability** | Pydantic Logfire로 추적 가능 |
+### Design Principles
 
-## 환경변수
+| Principle | Implementation |
+|-----------|---------------|
+| **Loose Coupling** | Plug-and-play tools/MCP servers — add or remove by file |
+| **Defense in Depth** | Guardrails protect all tool types (MCP + custom) |
+| **Lifecycle Management** | Singleton components with ordered start/stop |
+| **MCP Integration** | Connect filesystem, git, GitHub, and more |
+| **Observability** | Pydantic Logfire integration |
 
-| 변수 | 필수 | 설명 |
-|------|:----:|------|
-| `GOOGLE_API_KEY` | ✅ | Gemini API 키 |
-| `SLACK_BOT_TOKEN` | | Slack 봇 토큰 |
-| `SLACK_APP_TOKEN` | | Slack 앱 토큰 |
-| `API_AUTH_KEY` | | REST API 인증 키 (미설정 시 인증 비활성화) |
-| `GITHUB_TOKEN` | | MCP GitHub 연동 |
+## Environment Variables
 
-코어 환경변수: [.env.example](.env.example) | 커스텀 도구 환경변수는 `.env`에만 추가
+| Variable | Required | Description |
+|----------|:--------:|-------------|
+| `GOOGLE_API_KEY` | Yes | Gemini API key |
+| `SLACK_BOT_TOKEN` | | Slack bot token |
+| `SLACK_APP_TOKEN` | | Slack app token |
+| `API_AUTH_KEY` | | REST API auth key (disabled if unset) |
+| `GITHUB_TOKEN` | | MCP GitHub integration |
 
-## 개발
+See [.env.example](.env.example) for all core variables. Custom tool variables go in `.env` only.
+
+## Development
 
 ```bash
-make              # 도움말
-make test         # 코어 테스트
-make test-all     # 전체 테스트 (커스텀 도구 포함)
-make lint         # 린트 + 자동 수정
-make format       # 코드 포맷팅
-make tool-install # 외부 도구 설치
-make tool-upload  # 도구 공유용 업로드
-make edit-env     # .env 편집
+make              # Help
+make test         # Core tests
+make test-all     # All tests (including custom tools)
+make lint         # Lint + auto-fix
+make format       # Code formatting
+make tool-install # Install external tools
+make tool-upload  # Upload tools for sharing
+make edit-env     # Edit .env
 ```
 
-상세 가이드: [AGENTS.md](AGENTS.md)
+See [AGENTS.md](AGENTS.md) for the full development guide.
 
-## 제한사항
+## Contributing
 
-- 도구 추가 후 재시작 필요
-- SQLite 기반 (단일 인스턴스 권장)
-- 개인/소규모 팀 용도
+Contributions are welcome! Here's how:
 
-## 라이선스
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Follow the style guide in [AGENTS.md](AGENTS.md)
+4. Run `make lint && make test` before committing
+5. Submit a Pull Request
+
+### Adding a Tool
+
+The simplest way to contribute is adding a new tool:
+
+```python
+# src/tools/custom/your_tool.py
+from src.tools.registry import register_tool
+
+@register_tool
+def your_tool(param: str) -> str:
+    """What this tool does."""
+    return f"Result: {param}"
+```
+
+That's it. No other files to modify.
+
+## Limitations
+
+- Tools require a restart after adding
+- SQLite-based (single instance recommended)
+- Designed for personal / small team use
+
+## License
 
 MIT

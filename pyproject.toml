@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "sidekick"
 version = "0.1.0"
-description = "Personal AI Agent with pydantic-ai"
+description = "Personal AI agent with memory, task scheduling, and plug-and-play custom tools"
 readme = "README.md"
 requires-python = ">=3.10"
 
